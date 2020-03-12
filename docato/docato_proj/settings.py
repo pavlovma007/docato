@@ -19,8 +19,8 @@ DATABASES = {
         'NAME': 'docato',
         'USER' : 'root',
         'PASSWORD' : 'pwd',
-        #'HOST' : 'mysql', # MYSQL_HOST
-        'HOST' : '127.0.0.1', # MYSQL_HOST
+        'HOST' : 'mysql', # MYSQL_HOST
+        #'HOST' : '127.0.0.1', # MYSQL_HOST
         'PORT' : 3306,
     }
 }

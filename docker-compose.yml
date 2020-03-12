@@ -1,11 +1,11 @@
 version: '3'
 services:
   wui:
-    image: windj007/docato-wui
+    image: pavlovma007/docato-wui-20200312
     ports:
      - "80:80"
     depends_on:
-     - redis
+     - rabbit
      - mysql
     networks:
      - docato
@@ -15,18 +15,19 @@ services:
     restart: unless-stopped
 
   preproc:
-    image: windj007/docato-preproc
+    image: pavlovma007/docato-preproc-20200312
     depends_on:
      - mysql
-     - rabit
+     - rabbit
     links:
-     - rabit
+     - rabbit
     networks:
      - docato
     volumes:
      - "/home/mp/SATEK/docato/log:/docato_data/log"
      - "/home/mp/SATEK/docato/media:/docato_data/media"
-    restart: unless-stopped
+     - "/var/run/docker.sock:/var/run/docker.sock"
+#    restart: unless-stoppedrabit
 
   rabbit:
       hostname: rabbit
@@ -47,7 +48,7 @@ services:
       MYSQL_DATABASE: docato
     volumes:
      #- /home/mp/SATEK/docato/mysql:/var/lib/mysql
-     - /home/mp/SATEK/docato/mysql_fromdevyatkin2:/var/lib/mysql
+     - /home/mp/SATEK/docato_data/mysql_fromdevyatkin2:/var/lib/mysql
     image: mysql:5.6
     command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --max-allowed-packet=500M --innodb_log_file_size=10000000000
     networks:

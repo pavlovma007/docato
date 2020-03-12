@@ -11,22 +11,25 @@ import os
 import re
 import sys
 import subprocess
-
 import xml.etree.ElementTree as ET
-import lxml.html
+import hashlib
+import socket
 from lxml import etree
 from lxml.html.soupparser import fromstring
-
-import hashlib
-
 from pikabu_getpost import get_post_html_uft8
 from crawler_tokenize import mark_tokens_in_etree
 from wget_whole_page import wget_whole_page
-#from tokenize import mark_tokens_in_etree
-
+from contextlib import closing
 from django.conf import settings
 
-WGET_PORT = settings.WGET_PORT             # порт на котором можно серфить внутри контейнера, это другой порт не "для снаружи"
+def find_free_port():
+    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(('', 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]
+
+
+WGET_PORT = find_free_port() # settings.WGET_PORT             # порт на котором можно серфить внутри контейнера, это другой порт не "для снаружи"
 MEDIA_DIR = settings.MEDIA_ROOT  # '/home/mp/SATEK/docato/media/src/'   #'/home/mp/SATEK/docato/crawler_for_v1/1'  # TODO настроить на прод
 TMP_DIR = settings.TMP_DIR #'/tmp'
 #PATH_FOR_ZIP_DISCUSSION_ARCHIVE = '' # '/discuss_data/'   TODO настроить на прод

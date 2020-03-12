@@ -9,7 +9,7 @@ from selenium.common.exceptions import TimeoutException
 from lxml import etree
 from lxml.html.soupparser import fromstring
 
-browser = webdriver.PhantomJS()
+browser = webdriver.PhantomJS(service_log_path='/var/log/ghostdriver.log')
 
 # экспортируемая функция,
 def get_post_html_uft8(url):

@@ -1,8 +1,11 @@
-FROM windj007/docato-base
+FROM pavlovma007/docato-base-20200312
+#FROM windj007/docato-base
+
 MAINTAINER Roman <windj007@gmail.com>
 
 RUN apt-get install -yqq apache2 libapache2-mod-wsgi
 RUN rm /etc/apache2/sites-enabled/*
+RUN pip install django-createuser
 COPY docker/apache.conf /etc/apache2/sites-enabled/
 
 ADD docato /docato/src
@@ -11,5 +14,5 @@ COPY docker/wui_entrypoint.sh /docato/entrypoint.sh
 ENTRYPOINT ["/docato/entrypoint.sh"]
 CMD ["apache2ctl", "-DFOREGROUND"]
 
-RUN mkdir -p /docato_data/media/src && chown -R www-data:www-data /docato_data/media/src
-RUN pip install redis
+RUN mkdir -p /docato_data/media/src && chown -R www-data:www-data /docato_data/media/src  && chown -R  www-data:www-data /var/log/
+

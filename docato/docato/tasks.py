@@ -2,7 +2,6 @@
 from celery import task
 import logging, requests, os, tempfile, mimetypes, unidecode, traceback, subprocess
 
-from django.conf import settings
 from django.core.files import File
 from django.template.defaultfilters import slugify
 
