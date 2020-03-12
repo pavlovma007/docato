@@ -19,7 +19,8 @@ DATABASES = {
         'NAME': 'docato',
         'USER' : 'root',
         'PASSWORD' : 'pwd',
-        'HOST' : 'mysql', # MYSQL_HOST
+        #'HOST' : 'mysql', # MYSQL_HOST
+        'HOST' : '127.0.0.1', # MYSQL_HOST
         'PORT' : 3306,
     }
 }
@@ -57,7 +58,10 @@ USE_L10N = True
 USE_TZ = True
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/docato_data/media'
+MEDIA_ROOT = '/docato_data/media' #'/home/mp/SATEK/docato/media/'
+DISCUSS_URLS_MAIN_PART = ['pikabu.ru']
+WGET_PORT = 8090
+TMP_DIR = '/tmp'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
@@ -79,9 +83,10 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'docato_proj.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'docato.wsgi.application'
+# WSGI_APPLICATION = 'docato.wsgi.application'
 
 INSTALLED_APPS = (
+    'django_createuser',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -174,3 +179,4 @@ CONVERTED_PAGE_WIDTH = 1000
 COLORS_NUMBER = 200
 
 TIKA_PREFIX = '/docato/thirdparty/tika/'
+

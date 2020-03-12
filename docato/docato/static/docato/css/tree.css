@@ -1,0 +1,60 @@
+.discuss_post
+{
+    border: 1px solid black;
+}
+
+.comment_body
+{
+    float: left;
+    border: 1px solid red;
+}
+
+.comment_body.highlighted {
+    background: #FFAEAE;
+    color: #410000;
+}
+
+.comment_children
+{
+    margin-left: 20px;
+    clear: left;
+    /* border: 1px solid green; */
+}
+
+.comment_button
+{
+    font-weight: bold;
+}
+
+.highlight_label
+{
+    font-weight: italic;
+    color: #FF0000;
+}
+
+.comment_text.highlighted {
+    background: #FFAEAE;
+    color: #410000;
+}
+
+.alert {
+    background: #FF0000;
+    color: #FFFFFF;
+}
+
+.del-button {
+   background: url('../img/clear.png') center center no-repeat;
+   width: 13px;
+   height: 13px;
+   display: block;
+/*
+   display: block;
+   position: relative;
+   opacity: 0.6;
+   z-index: 100;
+   top: 50%;
+   right: 6px;
+   margin-top: -6px;
+
+*/
+}

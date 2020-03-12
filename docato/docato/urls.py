@@ -41,6 +41,7 @@ urlpatterns = patterns('',
     url(r'^subject/(?P<subj_id>\d+)/document/(?P<doc_id>\d+)/frame/get_value_variants$', views.get_value_variants, name = 'get_value_variants'),
     url(r'^subject/(?P<subj_id>\d+)/document/(?P<doc_id>\d+)/frame/add_list_value$', views.add_list_value, name = 'add_list_value'),
     url(r'^subject/(?P<subj_id>\d+)/document/(?P<doc_id>\d+)/frame/delete_list_value$', views.delete_list_value, name = 'delete_list_value'),
+    url(r'^subject/(?P<subj_id>\d+)/document/(?P<doc_id>\d+)/discuss_resource$', views.doc_discuss_recource, name = 'delete_list_value'),
     
     url(r'^search_empty$', views.SearchEmpty.as_view(), name = 'search_empty'),
     url(r'^search/(?P<eng_id>\d+)/(?P<query>.*)$', views.do_search, name = 'do_search'),

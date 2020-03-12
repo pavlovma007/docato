@@ -1,4 +1,6 @@
 import lxml.html, re
+#from lxml import etree
+from lxml.html.soupparser import fromstring
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from cStringIO import StringIO
@@ -11,7 +13,8 @@ def get_doc_text(doc):
 
 
 def highlight_features(doc):
-    tree = lxml.html.parse(StringIO(doc.converted_content))
+    tree = fromstring(doc.converted_content)
+
     head = tree.xpath('/html/head')[0]
     head.append(head.makeelement('link',
                                  attrib = {

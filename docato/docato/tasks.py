@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 from celery import task
 import logging, requests, os, tempfile, mimetypes, unidecode, traceback, subprocess
 
@@ -9,8 +10,11 @@ from models import Document
 from docato.preprocessor import Preprocessor
 import preprocessing
 from feature_extraction import extract_features
+from docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
+from django.conf import settings
 
 logger = logging.getLogger('preprocessing')
+
 
 @task()
 def process_doc(doc_id):
@@ -63,3 +67,30 @@ def process_doc(doc_id):
         doc.preproc_state = Document.States.ERROR
         logger.error('An error has occurred when processing the doc %s: %s\n%s' % (doc.title, err, traceback.format_exc()))
     doc.save()
+
+
+
+
+
+@task()
+def process_discussion(doc_id, url):
+    logger.info('Got doc %s to process', doc_id)
+    doc = Document.objects.get(id=doc_id)
+    # в media-dir лежит zip архив, в котором все файлы дискуссии, надо  положить главный html этой дискуссии в converted_content
+    discuss_type = 'pikabu' in url
+    slug = '100500'
+    try :
+        html_text = discussion_pikabu_get_byurl(url)
+    except Exception as ex:
+        logger.error('не смог обработать документ %s: %r\n%s' % (doc_id, ex, traceback.format_exc()))
+        doc.state = Document.States.ANALYZED
+        doc.converted_content = '<html><head></head>ошибка случилась  <br/>{}</html>'.format(ex.message)  # todo + стек трейс
+        doc.state = Document.States.ERROR
+        doc.save
+        return
+    doc.content_type = 'pikabu.html'# preprocessing.PDF_EXTENSION
+    doc.converted_content = html_text  #'<html><head></head>hello world</html>'
+    doc.state = Document.States.ANALYZED
+    doc.preproc_state = Document.States.ANALYZED
+    doc.save()
+    return

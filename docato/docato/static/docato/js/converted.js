@@ -36,12 +36,13 @@ jQuery(document).ready(function ($) {
 	var $chunks = $('.chunk');
 	var shiftPressed = false;
 	var ctrlPressed = false;
-	$('body').keydown(function (event) {
+	$(document).on('keydown', function (event) {
 		if (event.which == 16 || event.shiftKey)
 			shiftPressed = true;
 		if (event.which == 17)
 			ctrlPressed = true;
-	}).keyup(function (event) {
+	})
+	$(document).on('keyup', function (event) {
 		if (event.which == 16 || event.shiftKey)
 			shiftPressed = false;
 		if (event.which == 17)
@@ -91,7 +92,7 @@ jQuery(document).ready(function ($) {
 	
 	// ****************************** sidebar *********************************
 	$('#sidebar').removeClass('opened');
-	
+
 	// ****************************** feedback ********************************
 	var menuPos = null;
 	var menu = [{

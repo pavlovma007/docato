@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 from django.views.generic.edit import BaseFormView, BaseCreateView, CreateView
 from django.views.decorators.http import require_POST
 from django.utils.decorators import method_decorator
@@ -18,7 +19,7 @@ import os, json, traceback, itertools
 import tables
 import forms
 import tasks
-
+from django.conf import settings
 from models import *
 from django.views.generic.base import TemplateView
 from feature_extraction import highlight_features, try_extract_int, try_extract_real
@@ -201,7 +202,23 @@ class SubjectPage(LoginRequiredMixin, SubjectMixin, BaseFormView, tables.djtab2.
         try:
             new_doc = self.get_subject().docs.create(load_time = timezone.now(),
                                                      **form.cleaned_data)
-            tasks.process_doc.delay(new_doc.id)
+            # по разному обработать дискуссию и документ
+            if bool(form.cleaned_data['url']):
+                # это дискуссия
+                # проверим допустимость url
+                url = form.cleaned_data['url']
+                if len([1 for url_part in settings.DISCUSS_URLS_MAIN_PART if url_part in url])!=0:
+                    tasks.process_discussion(new_doc.id, url)
+                else:
+                    # не разрешенный url
+                    logger.error('url of discuss is not allowed')
+                    open_dialog = True
+                    add_doc_err = _('this discussion type is not allowed. allowed discussion sites: '+str(settings.DISCUSS_URLS_MAIN_PART))
+                    return self.render_to_response(self.get_context_data(open_dialog=open_dialog,
+                                                                         add_doc_err=add_doc_err))
+            else:
+                # это документ
+                tasks.process_doc.delay(new_doc.id)
             return redirect('subject_page', subj_id = self.subject.id)
         except Exception as ex:
             logger.error('Could not schedule an uploaded document for processing: %r\n%s' % (ex, traceback.format_exc()))
@@ -877,6 +894,16 @@ def delete_list_value(request, **kwargs):
     else:
         raise SuspiciousOperation()
 
+@login_required
+def doc_discuss_recource(request, **kwargs):
+    doc = get_doc(request, **kwargs)
+    path = request.GET['path']
+    slug = request.GET['slug']
+    import zipfile
+    archive = zipfile.ZipFile(os.path.join(settings.MEDIA_ROOT,slug+'.zip'), 'r')
+    img_data = archive.read(path)
+    archive.close()
+    return HttpResponse(content = img_data) # , mimetype="image/*"
 
 ###############################################################################
 ################################## Search #####################################

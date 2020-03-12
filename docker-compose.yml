@@ -10,38 +10,46 @@ services:
     networks:
      - docato
     volumes:
-     - "/home/windj/projects/med_web_helper/new_data/wui/log:/docato_data/log"
-     - "/home/windj/projects/med_web_helper/new_data/wui/media:/docato_data/media"
+     - "/home/mp/SATEK/docato/log:/docato_data/log"
+     - "/home/mp/SATEK/docato/media:/docato_data/media"
     restart: unless-stopped
 
   preproc:
     image: windj007/docato-preproc
     depends_on:
      - mysql
-     - redis
+     - rabit
+    links:
+     - rabit
     networks:
      - docato
     volumes:
-     - "/home/windj/projects/med_web_helper/new_data/wui/log:/docato_data/log"
-     - "/home/windj/projects/med_web_helper/new_data/wui/media:/docato_data/media"
+     - "/home/mp/SATEK/docato/log:/docato_data/log"
+     - "/home/mp/SATEK/docato/media:/docato_data/media"
     restart: unless-stopped
 
-  redis:
-    image: redis
-    networks:
-      docato:
-        aliases:
-         - redis
-    restart: unless-stopped
+  rabbit:
+      hostname: rabbit
+      image: rabbitmq:latest
+      environment:
+          - RABBITMQ_DEFAULT_USER=admin
+          - RABBITMQ_DEFAULT_PASS=mypass
+      networks:
+        - docato
+      ports:
+          - "5673:5672"
 
   mysql:
+    ports:
+     - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: pwd
       MYSQL_DATABASE: docato
     volumes:
-     - /home/windj/projects/med_web_helper/new_data/mysql:/var/lib/mysql
-    image: mysql:5.5
-    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --max-allowed-packet=104857600 --innodb_log_file_size=536870912
+     #- /home/mp/SATEK/docato/mysql:/var/lib/mysql
+     - /home/mp/SATEK/docato/mysql_fromdevyatkin2:/var/lib/mysql
+    image: mysql:5.6
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci --max-allowed-packet=500M --innodb_log_file_size=10000000000
     networks:
       docato:
         aliases:
