@@ -30,9 +30,9 @@ def find_free_port():
 
 
 WGET_PORT = find_free_port() # settings.WGET_PORT             # порт на котором можно серфить внутри контейнера, это другой порт не "для снаружи"
-MEDIA_DIR = settings.MEDIA_ROOT  # '/home/mp/SATEK/docato/media/src/'   #'/home/mp/SATEK/docato/crawler_for_v1/1'  # TODO настроить на прод
-TMP_DIR = settings.TMP_DIR #'/tmp'
-#PATH_FOR_ZIP_DISCUSSION_ARCHIVE = '' # '/discuss_data/'   TODO настроить на прод
+MEDIA_DIR = settings.MEDIA_ROOT
+TMP_DIR = settings.TMP_DIR
+
 
 # сервит переработанный html дискуссии, чтобы wget забрал whole page с этого адреса и переделал ссылки на локальные
 class view_Server :

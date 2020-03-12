@@ -108,13 +108,4 @@ def _make_comment_html_from_xml(xml_text):
             div.remove(fig) # test
 
         s = unicode( etree.tostring(doc, method='html') )
-        # result_tree = transform(doc)
-        # formatted_html = unicode(result_tree)
-        # plain_text = etree.tostring(result_tree, encoding='unicode', method='text')
-
-        #plain_html = etree.tostring(result_tree, encoding='unicode', method='xml')
-        #f = open('test.html','wb') ; f.write(s.encode('utf-8').strip()); f.close() # TODO remove
-        #
-        #  сделать serve html в фоне так, чтобы потом его убить
-        # запустить в фоне html
         return s.encode('utf-8').strip(), doc
