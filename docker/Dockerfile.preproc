@@ -13,13 +13,13 @@ ENV DOCKER_TLS_CERTDIR=/certs
 RUN mkdir /certs /certs/client && chmod 1777 /certs /certs/client
 #############################
 
-# todo возможно openjdk уже не нужно, как минимум
+# todo возможно openjdk уже не нужно, как минимум # openjdk-8-jdk
 RUN apt-get update && \
 	apt-get install -yqq apache2 build-essential cmake \
 		pkg-config libspiro-dev libpng-dev libjpeg-dev \
         git wget libopenjp2-7-dev libfontconfig1-dev \
 		libtool autoconf python python-dev libglib2.0-dev libxml2-dev \
-		gettext libcairo2-dev libpango1.0-dev openjdk-8-jdk supervisor xvfb && \
+		gettext libcairo2-dev libpango1.0-dev supervisor xvfb && \
 	apt-get clean
 
 RUN ldconfig

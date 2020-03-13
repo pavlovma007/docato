@@ -18,7 +18,8 @@ from guardian.shortcuts import get_objects_for_user, get_perms, assign_perm
 import os, json, traceback, itertools
 import tables
 import forms
-import tasks
+#import docato.docato.tasks
+from docato_proj.celery import app as celery_app
 from django.conf import settings
 from models import *
 from django.views.generic.base import TemplateView
@@ -208,7 +209,9 @@ class SubjectPage(LoginRequiredMixin, SubjectMixin, BaseFormView, tables.djtab2.
                 # проверим допустимость url
                 url = form.cleaned_data['url']
                 if len([1 for url_part in settings.DISCUSS_URLS_MAIN_PART if url_part in url])!=0:
-                    tasks.process_discussion(new_doc.id, url)
+                    #docato.docato.tasks.process_discussion.delay(new_doc.id, url)
+                    #celery_app.signature('load-data-for-discussion', kwargs={'doc_id':new_doc.id, 'url': url}).delay()
+                    celery_app.send_task('load-data-for-discussion', kwargs={'doc_id':new_doc.id, 'url': url})
                 else:
                     # не разрешенный url
                     logger.error('url of discuss is not allowed')
@@ -218,7 +221,9 @@ class SubjectPage(LoginRequiredMixin, SubjectMixin, BaseFormView, tables.djtab2.
                                                                          add_doc_err=add_doc_err))
             else:
                 # это документ
-                tasks.process_doc.delay(new_doc.id)
+                #docato.docato.tasks.process_doc.delay(new_doc.id)
+                #celery_app.signature('load-data-for-document', kwargs={'doc_id': new_doc.id}).delay()
+                celery_app.send_task('load-data-for-discussion', kwargs={'doc_id':new_doc.id, 'url': url})
             return redirect('subject_page', subj_id = self.subject.id)
         except Exception as ex:
             logger.error('Could not schedule an uploaded document for processing: %r\n%s' % (ex, traceback.format_exc()))

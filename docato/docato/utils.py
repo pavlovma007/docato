@@ -1,4 +1,7 @@
-import docato.models
+try:
+    import docato.models
+except ImportError:
+    import docato.docato.models
 from django.conf import settings
 
 

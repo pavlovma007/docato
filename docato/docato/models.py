@@ -12,7 +12,11 @@ from django.conf import settings
 
 from polymorphic.models import PolymorphicModel
 
-from docato.utils import get_unique_model_name, try_get_reference, get_value, ValuesTypes
+try:
+    from docato.utils import get_unique_model_name, try_get_reference, get_value, ValuesTypes
+except ImportError:
+    from docato.docato.utils import get_unique_model_name, try_get_reference, get_value, ValuesTypes
+
 
 logger = logging.getLogger('common')
 
