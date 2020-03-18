@@ -203,11 +203,11 @@ class SubjectPage(LoginRequiredMixin, SubjectMixin, BaseFormView, tables.djtab2.
         try:
             new_doc = self.get_subject().docs.create(load_time = timezone.now(),
                                                      **form.cleaned_data)
+            url = form.cleaned_data['url']
             # по разному обработать дискуссию и документ
             if bool(form.cleaned_data['url']):
                 # это дискуссия
                 # проверим допустимость url
-                url = form.cleaned_data['url']
                 if len([1 for url_part in settings.DISCUSS_URLS_MAIN_PART if url_part in url])!=0:
                     #docato.docato.tasks.process_discussion.delay(new_doc.id, url)
                     #celery_app.signature('load-data-for-discussion', kwargs={'doc_id':new_doc.id, 'url': url}).delay()
@@ -222,8 +222,7 @@ class SubjectPage(LoginRequiredMixin, SubjectMixin, BaseFormView, tables.djtab2.
             else:
                 # это документ
                 #docato.docato.tasks.process_doc.delay(new_doc.id)
-                #celery_app.signature('load-data-for-document', kwargs={'doc_id': new_doc.id}).delay()
-                celery_app.send_task('load-data-for-discussion', kwargs={'doc_id':new_doc.id, 'url': url})
+                celery_app.send_task('load-data-for-document', kwargs={'doc_id':new_doc.id})
             return redirect('subject_page', subj_id = self.subject.id)
         except Exception as ex:
             logger.error('Could not schedule an uploaded document for processing: %r\n%s' % (ex, traceback.format_exc()))

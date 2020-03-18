@@ -10,8 +10,8 @@ services:
     networks:
      - docato
     volumes:
-     - "/home/mp/SATEK/docato_data/log:/docato_data/log"
-     - "/home/mp/SATEK/docato_data/media:/docato_data/media"
+     - "/docato_data/log:/docato_data/log"
+     - "/docato_data/media:/docato_data/media"
     restart: unless-stopped
 
   preproc:
@@ -24,8 +24,8 @@ services:
     networks:
      - docato
     volumes:
-     - "/home/mp/SATEK/docato_data/log:/docato_data/log"
-     - "/home/mp/SATEK/docato_data/media:/docato_data/media"
+     - "/docato_data/log:/docato_data/log"
+     - "/docato_data/media:/docato_data/media"  # тут надо чтобы совпадал путь! иначе внутренний docker запутается в путях
      - "/var/run/docker.sock:/var/run/docker.sock"
 
 

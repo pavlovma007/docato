@@ -20,7 +20,7 @@ def parse(filename, window_width = 1000):
             # https://hub.docker.com/r/aslubsky/docker-unoconv/
             c = docker.DockerClient(base_url='unix://var/run/docker.sock', timeout=100)
             ctr = c.containers.run('aslubsky/docker-unoconv',
-                                   command='/bin/bash -c  "unoconv --listener & sleep 2 && unoconv -v -f pdf  -o /out    /uploads/'+justfile+'"',
+                                   command='/bin/bash -c  "unoconv --listener & sleep 10 && unoconv -v -f pdf  -o /out    /uploads/'+justfile+'"',
                                    volumes=volumes,
                                    detach=True)
             logs = ctr.logs(stream=True)

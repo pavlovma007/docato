@@ -93,7 +93,7 @@
 					this.value_end = -1;
 					this.value = '';
 
-					var doc = $(window.contentDocument);
+					var doc = $(window.document);
 					var selected_tokens = doc.find('.highlighted');
 					
 					this.reset = function() {
@@ -232,7 +232,7 @@
 					var classes = '.token_' + start;
 					for (var i = start + 1; i <= end; i++)
 						classes = classes + ',.token_' + i;
-					frames['doc_content'].contentWindow.postMessage(classes, '*');
+					frames['doc_content'].postMessage(classes, '*');
 				}
 				
 

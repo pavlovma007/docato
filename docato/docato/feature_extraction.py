@@ -4,7 +4,10 @@ from lxml.html.soupparser import fromstring
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from cStringIO import StringIO
-from docato.utils import get_sval_color_style
+try:
+    from docato.utils import get_sval_color_style
+except ImportError:
+    from docato.docato.utils import get_sval_color_style
 
 
 def get_doc_text(doc):

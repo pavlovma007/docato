@@ -13,7 +13,10 @@ print('TASKS.py imported')
 @app.task(name='load-data-for-document')
 def process_doc(doc_id):
 	from models import Document
-	from docato.preprocessor import Preprocessor
+	try:
+		from docato.docato.preprocessor import Preprocessor
+	except ImportError:
+		from docato.preprocessor import Preprocessor
 	import preprocessing
 	from feature_extraction import extract_features
 	#
