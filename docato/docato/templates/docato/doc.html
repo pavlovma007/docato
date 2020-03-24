@@ -93,7 +93,7 @@
 					this.value_end = -1;
 					this.value = '';
 
-					var doc = $(window.document);
+					var doc = $(window.document || window.contentDocument);
 					var selected_tokens = doc.find('.highlighted');
 					
 					this.reset = function() {
@@ -140,7 +140,7 @@
 				}
 				
 				function processTokensById(begin, end, callback) {
-					var doc = $(frames['doc_content'].document);
+					var doc = $(frames['doc_content'].document || frames['doc_content'].contentDocument);
 					for (var i = begin; i <= end; i++)
 						callback.apply(doc.find('.token_' + i));
 				}
@@ -232,7 +232,7 @@
 					var classes = '.token_' + start;
 					for (var i = start + 1; i <= end; i++)
 						classes = classes + ',.token_' + i;
-					frames['doc_content'].postMessage(classes, '*');
+					(frames['doc_content'].postMessage || frames['doc_content'].contentWindow.postMessage)(classes, '*');
 				}
 				
 

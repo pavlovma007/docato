@@ -50,6 +50,7 @@ def _subdiv_element_text_to_marked_tokens(el, text_l, counter):
 		i += 1
 	return i
 
+# test  ( tdd )
 if __name__ == '__main__':
 	with open('crawler_for_v1/1/index.html', 'r') as f:
 		data = f.read()
