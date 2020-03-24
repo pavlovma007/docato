@@ -131,8 +131,12 @@ class PikabuWithCommentsProcessor(object):
             content2 = re.sub(r'\.\./(.*?[\"\)\'\>])', 'discuss_resource?slug={0}&path=\g<1>'.format(slug), content)
             content2 = re.sub(r'http:\/\/localhost:{}\/static'.format(WGET_PORT), '/static', content2)
             content2 = mark_tokens_in_etree(content2)
-            with open('{0}/{1}/index.html'.format(TMP_DIR, slug), 'w') as content_file2:
-                content_file2.write(content2)
+            with open('{0}/{1}/index.html'.format(TMP_DIR, slug), 'w') as comment_json:
+                comment_json.write(content2)
+        # сохраним все коментарии
+        with open('{0}/{1}/comments.json'.format(TMP_DIR, slug), 'w') as comment_json:
+            comment_json.write(json_s)
+
         # сожмём содержимое
         #zip -rm Output folder1  folder2  file1
         command = 'zip -rm {1} ./ ; mv "{0}/{1}/{1}.zip" "{2}" ; rm -r {0}/{1}'.format(TMP_DIR, slug, MEDIA_DIR)
