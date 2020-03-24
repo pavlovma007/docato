@@ -103,6 +103,8 @@ class PikabuWithCommentsProcessor(object):
         # соединим это вместе
         postcontainer = etree.Element("div");
         comment_etree.find('body').insert(0, postcontainer)
+        yacor = etree.fromstring('<div class="comment_body" id="0" style="border: 0px;"></div>')
+        comment_etree.find('body').insert(0, yacor)
         for el in post_etree.xpath('//img[@data-src]'):
             el.set('src', el.get('data-src'))
             el.set('style', "opacity: 100;")
