@@ -27,7 +27,6 @@ from feature_extraction import highlight_features, try_extract_int, try_extract_
 from docato.utils import iterate_over_slot_values, iterate_over_frametypes, \
     get_frame_color_style_for_tree, get_sval_color_style, get_sval_color_style_for_tree
 
-
 logger = logging.getLogger('common')
 
 
@@ -217,6 +216,7 @@ class SubjectPage(LoginRequiredMixin, SubjectMixin, BaseFormView, tables.djtab2.
                     logger.error('url of discuss is not allowed')
                     open_dialog = True
                     add_doc_err = _('this discussion type is not allowed. allowed discussion sites: '+str(settings.DISCUSS_URLS_MAIN_PART))
+                    new_doc.delete()
                     return self.render_to_response(self.get_context_data(open_dialog=open_dialog,
                                                                          add_doc_err=add_doc_err))
             else:
