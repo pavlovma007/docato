@@ -41,9 +41,9 @@ jQuery(document).ready(function ($) {
         $.ajax({
           url: location.href,
           type: "POST",
-          data: { csrfmiddlewaretoken: "{{ csrf_token }}", page:123},
+          data: { csrfmiddlewaretoken: "{{ csrf_token }}", page:123, task_id:'{{task_id}}' },
           success: function(data){
-            $("#log").html(data);
+            $("#log").append(data);
           },
           dataType: 'html'
         });

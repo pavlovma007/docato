@@ -21,11 +21,13 @@ import forms
 #import docato.docato.tasks
 from docato_proj.celery import app as celery_app
 from django.conf import settings
+from docato.tasks import build_export_channel_name
 from models import *
 from django.views.generic.base import TemplateView
 from feature_extraction import highlight_features, try_extract_int, try_extract_real
 from docato.utils import iterate_over_slot_values, iterate_over_frametypes, \
     get_frame_color_style_for_tree, get_sval_color_style, get_sval_color_style_for_tree
+import pika
 
 logger = logging.getLogger('common')
 
@@ -64,7 +66,7 @@ class Projects(LoginRequiredMixin, BaseCreateView, tables.djtab2.SingleTableView
         context = super(Projects, self).get_context_data(**kwargs)
         context['form'] = self.get_form(self.get_form_class())
         return context
-    
+
     def form_valid(self, form):
         result = super(Projects, self).form_valid(form)
         assign_perm('docato.change_project', self.request.user, self.object)
@@ -91,7 +93,7 @@ class ProjectPage(LoginRequiredMixin, BaseCreateView, tables.djtab2.SingleTableV
             self.project = get_project(self.request,
                                        **self.kwargs)
         return self.project
-        
+
 
     def get_queryset(self):
         return get_objects_for_user(self.request.user,
@@ -112,7 +114,7 @@ class ProjectPage(LoginRequiredMixin, BaseCreateView, tables.djtab2.SingleTableV
     def post(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
         return super(ProjectPage, self).post(request, *args, **kwargs)
-    
+
     def get_context_data(self, **kwargs):
         context = super(ProjectPage, self).get_context_data(**kwargs)
         context['form'] = self.get_form(self.get_form_class())
@@ -122,7 +124,7 @@ class ProjectPage(LoginRequiredMixin, BaseCreateView, tables.djtab2.SingleTableV
     def get_success_url(self):
         return reverse('project',
                        kwargs = { 'proj_id' : self.project.id })
-    
+
     def form_valid(self, form):
         result = super(ProjectPage, self).form_valid(form)
         assign_perm('docato.change_subject', self.request.user, self.object)
@@ -143,32 +145,57 @@ def delete_projects(request):
 
 
 class ProjectExportPage(LoginRequiredMixin, TemplateView): #BaseCreateView
-    template_name = 'docato/project_export.html'
-    #model = Subject
-    #table_class = tables.SubjectsTable
-    #form_class = forms.NewSubjectForm
+	template_name = 'docato/project_export.html'
 
-    def get_context_data(self, **kwargs):
-        context =TemplateView.get_context_data(self,**kwargs)
-        #context['form'] = self.get_form(self.get_form_class())
-        context['project'] = Project.objects.filter(id=context['proj_id']).get()
-        return context
+	# просто посылаем задачу в работу
+	def start_export(self):
+		tid = celery_app.send_task('project-export', kwargs={'proj_id':self.project.id  })
+		#print(tid)
+		return tid
 
-
-    def form_valid(self, form):
-        result = super(ProjectPage, self).form_valid(form)
-        assign_perm('docato.change_subject', self.request.user, self.object)
-        assign_perm('docato.delete_subject', self.request.user, self.object)
-        assign_perm('docato.can_add_docs', self.request.user, self.object)
-        assign_perm('docato.can_edit_docs', self.request.user, self.object)
-        assign_perm('docato.can_edit_typesystem', self.request.user, self.object)
-        return result
-    # запрос приходит из js ajax кода, чтобы прочитать лог (каждые 2 сек)
-    def post(self, request, *args, **kwargs):
-        page = request.POST['page']
-        return HttpResponse('line1<br/>line2<br/>line3')
+	def get_context_data(self, **kwargs):
+		context =TemplateView.get_context_data(self,**kwargs)
+		context['project'] = Project.objects.filter(id=context['proj_id']).get()
+		#
+		self.project = context['project']
+		tid = self.start_export()
+		#
+		context['task_id'] = tid
+		return context
 
 
+	def form_valid(self, form):
+		result = super(ProjectPage, self).form_valid(form)
+		assign_perm('docato.change_subject', self.request.user, self.object)
+		assign_perm('docato.delete_subject', self.request.user, self.object)
+		assign_perm('docato.can_add_docs', self.request.user, self.object)
+		assign_perm('docato.can_edit_docs', self.request.user, self.object)
+		assign_perm('docato.can_edit_typesystem', self.request.user, self.object)
+		return result
+	# запрос приходит из js ajax кода, чтобы прочитать лог (каждые 2 сек)
+	def post(self, request, *args, **kwargs):
+		#
+		#page = request.POST['page']
+		task_id=request.POST['task_id'] # для получения лога задачи со страницы которая получила этот id
+		#
+		url = os.environ.get('CLOUDAMQP_URL', celery_app.conf.BROKER_URL)
+		params = pika.URLParameters(url)
+		connection = pika.BlockingConnection(params)
+		channel = connection.channel()  # start a channel
+		channel.queue_declare(queue=build_export_channel_name(task_id))  # Declare a queue
+		messages=[]
+		for method_frame, properties, body in channel.consume(build_export_channel_name(task_id), inactivity_timeout=1):
+			if method_frame==None: #print(method_frame);			print(properties);			print(body)
+				break
+			channel.basic_ack(method_frame.delivery_tag)# Acknowledge the message
+			messages.append(body)
+			# Escape out of the loop after 10 messages
+		requeued_messages = channel.cancel()
+		print('Requeued %i messages' % requeued_messages)
+		channel.close() # Close the channel and the connection
+		connection.close()
+		#
+		return HttpResponse('<br/>'.join(messages))
 
 
 ###############################################################################
@@ -209,7 +236,7 @@ class SubjectPage(LoginRequiredMixin, SubjectMixin, BaseFormView, tables.djtab2.
     model = Document
     table_class = tables.DocumentsTable
     form_class = forms.AddDocumentForm
-    
+
     def get_queryset(self):
         return self.get_subject().docs.all()
 
@@ -455,7 +482,7 @@ def update_slot(request, *args, **kwargs):
     slot = get_slot(request, **kwargs)
     if not 'can_edit_typesystem' in get_perms(request.user, slot.frame_type.subject):
         raise PermissionDenied()
-    
+
     field_name = request.POST.get('name', None)
     value = request.POST.get('value', None)
     if field_name == 'name':
@@ -671,7 +698,7 @@ def get_json_for_frame(frame, sval = None):
                       'id' : frame.id,
                       'sval_id' : sval.id if not sval is None else None,
                       'can_delete' : sval.slot.is_list_slot if not sval is None else True,
-                      'name' : frame.name 
+                      'name' : frame.name
                       },
             'children' : [ get_json_for_frame_slot(frame, slot) for slot in frame.type.slots.all().order_by('order') ]
             }
@@ -719,7 +746,7 @@ def get_extracted_data(request, *args, **kwargs):
             result = []
     return HttpResponse(json.dumps(result),
                         content_type = 'application/json')
-        
+
 
 @login_required
 @require_POST
@@ -742,7 +769,7 @@ def converted_doc(request, **kwargs):
 def add_frame(request, **kwargs):
     doc = get_doc(request, **kwargs)
     new_frame = doc.frames.create(type = doc.subject.types.get(id = request.POST['type']))
-    new_frame.reset_name() 
+    new_frame.reset_name()
     new_frame.create_slot_values()
     return HttpResponse(json.dumps(get_json_for_frame(new_frame)),
                         content_type = 'application/json')
@@ -823,7 +850,7 @@ def update_sval_value(request, **kwargs):
     elif isinstance(sval, ObjectSlotValue) and not sval.slot.embedded:
         try:
             value = int(value)
-            sval.value = doc.frames.get(id = value) if value >= 0 else None 
+            sval.value = doc.frames.get(id = value) if value >= 0 else None
             sval.save()
             return HttpResponse(json.dumps({
                                             'name' : get_ref_node_name(sval),

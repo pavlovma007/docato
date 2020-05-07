@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 from celery import task
 from docato_proj.celery import app
+import celery
 import logging, requests, os, tempfile, mimetypes, unidecode, traceback, subprocess
 from django.core.files import File
 from django.template.defaultfilters import slugify
@@ -82,8 +83,6 @@ def process_discussion(doc_id, url):
 	logger.info('Got doc %s to process', doc_id)
 	doc = Document.objects.get(id=doc_id)
 	# в media-dir лежит zip архив, в котором все файлы дискуссии, надо  положить главный html этой дискуссии в converted_content
-	discuss_type = 'pikabu' in url
-	slug = '100500'
 	try :
 		html_text = discussion_pikabu_get_byurl(url)
 	except Exception as ex:
@@ -98,4 +97,43 @@ def process_discussion(doc_id, url):
 	doc.state = Document.States.ANALYZED
 	doc.preproc_state = Document.States.ANALYZED
 	doc.save()
+	return
+
+def build_export_channel_name(task_id):
+	return 'project-export-tid-%s'%task_id
+@app.task(name='project-export')
+def project_export(proj_id):
+	from models import Project
+	# try:
+	# 	from docato.docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
+	# except ImportError:
+	# 	from docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
+
+	#
+	logger.info('Got proj_id %s to process for EXPORT ', proj_id)
+	project = Project.objects.get(id=proj_id)
+	task_id = celery.current_task.request.id
+	#   send
+	def send_log_message(msg):
+		import pika
+		url = os.environ.get('CLOUDAMQP_URL',  app.conf.BROKER_URL )
+		params = pika.URLParameters(url)
+		params.socket_timeout = 5
+		#
+		connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
+		channel = connection.channel()  # start a channel
+		qname=build_export_channel_name(task_id)
+		channel.queue_declare(queue=qname )  # Declare a queue
+		# send a message
+		channel.basic_publish(exchange='', routing_key='project-export-tid-%s'%task_id, body=msg)
+		#print ("[x] Message sent to consumer")
+		connection.close()
+	#
+	send_log_message('hello')
+
+	#subjects = project.subjects
+	# for s in subjects:
+	# 	pass
+	# 	docs=s.documents
+
 	return
