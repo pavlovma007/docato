@@ -1,0 +1,92 @@
+{% extends "docato/base.html" %}
+{% load staticfiles %}
+{% load i18n %}
+
+{% block extrahead %}
+	{{ block.super }}
+	<link rel="stylesheet" type="text/css" href="{% static "docato/css/summary.css" %}">
+
+	<script type="text/javascript" src="{% static 'docato/js/make_fill_height.js' %}"></script>
+	<script type="text/javascript" src="{% static 'docato/js/jquery.floatThead.min.js' %}"></script>
+{% endblock extrahead %}
+
+{% block navbar %}
+	<li><a href="{% url 'projects' %}">{% trans 'Projects' %}</a></li>
+    <li class="active"><a href="{% url 'project' project.id %}">Proj&nbsp;{{ project.name }}</a></li>
+{% endblock navbar %}
+
+{% block content %}
+
+<table id="features" class="table table-striped table-bordered table-condensed text-center" style="width:80%; height: 900px; margin-left:10%;">
+	<thead>
+		<tr>
+			<th>{% trans 'Export process Log (update every 3 sec)'  %}</th>
+		</tr>
+	</thead>
+	<tbody>
+        <tr>
+            <td>
+                <div id="log" style="text-align:left;">
+                </div>
+                <img src="https://bureau.ru/bb/soviet/20120626/krutilka_12frames.gif"> <!-- TODO -->
+            </td>
+        </tr>
+	</tbody>
+</table>
+
+<script type="text/javascript">
+jQuery(document).ready(function ($) {
+    // обновление данных в логе
+    setInterval(function(){
+        $.ajax({
+          url: location.href,
+          type: "POST",
+          data: { csrfmiddlewaretoken: "{{ csrf_token }}", page:123},
+          success: function(data){
+            $("#log").html(data);
+          },
+          dataType: 'html'
+        });
+    },3000);
+
+	var $features_table = $('#features');
+	function createFHT() {
+		$features_table.floatThead();
+// 		$features_table.fixedHeaderTable({
+// 			fixedColumn: true,
+// 			fixedColumns: 1
+// 		});
+	}
+	createFHT();
+
+	function swap_visible_values() {
+		$('.slot_value').each(function () {
+			var self = $(this);
+			var vis = self.find('.visible_value');
+			var popup = self.find('.popup_value');
+			var vis_text = vis.html();
+			var popup_text = popup.attr('data-original-title');
+			vis.html(popup_text);
+			popup.attr('data-original-title', vis_text);
+			popup.tooltip('fixTitle');
+		})
+		$features_table.floatThead('reflow');
+		// $features_table.fixedHeaderTable('destroy');
+		// createFHT();
+	}
+	var norm_values_visible = true;
+	var $swap_visible_values_link = $('#swap_visible_values');
+	$swap_visible_values_link.click(function () {
+		swap_visible_values();
+		if (norm_values_visible) {
+			$swap_visible_values_link.text('{% trans "Show values" %}');
+			norm_values_visible = false;
+		} else {
+			$swap_visible_values_link.text('{% trans "Show cues" %}');
+			norm_values_visible = true;
+		}
+	});
+});
+</script>
+
+{% endblock content %}

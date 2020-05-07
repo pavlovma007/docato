@@ -132,7 +132,6 @@ class ProjectPage(LoginRequiredMixin, BaseCreateView, tables.djtab2.SingleTableV
         assign_perm('docato.can_edit_typesystem', self.request.user, self.object)
         return result
 
-
 @login_required
 @require_POST
 def delete_projects(request):
@@ -141,6 +140,36 @@ def delete_projects(request):
                          ('docato.delete_project', ),
                          Project.objects.filter(id__in = ids)).delete()
     return HttpResponse('')
+
+
+class ProjectExportPage(LoginRequiredMixin, TemplateView): #BaseCreateView
+    template_name = 'docato/project_export.html'
+    #model = Subject
+    #table_class = tables.SubjectsTable
+    #form_class = forms.NewSubjectForm
+
+    def get_context_data(self, **kwargs):
+        context =TemplateView.get_context_data(self,**kwargs)
+        #context['form'] = self.get_form(self.get_form_class())
+        context['project'] = Project.objects.filter(id=context['proj_id']).get()
+        return context
+
+
+    def form_valid(self, form):
+        result = super(ProjectPage, self).form_valid(form)
+        assign_perm('docato.change_subject', self.request.user, self.object)
+        assign_perm('docato.delete_subject', self.request.user, self.object)
+        assign_perm('docato.can_add_docs', self.request.user, self.object)
+        assign_perm('docato.can_edit_docs', self.request.user, self.object)
+        assign_perm('docato.can_edit_typesystem', self.request.user, self.object)
+        return result
+    # запрос приходит из js ajax кода, чтобы прочитать лог (каждые 2 сек)
+    def post(self, request, *args, **kwargs):
+        page = request.POST['page']
+        return HttpResponse('line1<br/>line2<br/>line3')
+
+
+
 
 ###############################################################################
 ################################## Subjects ###################################

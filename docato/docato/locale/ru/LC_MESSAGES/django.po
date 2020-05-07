@@ -424,6 +424,9 @@ msgstr "Загрузить документ"
 msgid "Summary table"
 msgstr "Сводная таблица"
 
+msgid "Export Project"
+msgstr "Экспорт проекта"
+
 #: templates/docato/subject.html:15 templates/docato/summary.html:19
 msgid "Analysis"
 msgstr "Анализ"
