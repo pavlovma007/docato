@@ -136,8 +136,8 @@ def export_doc(document, myprint):
 			t_id = m.group(1)
 			tokens[ t_id ] = c.text
 		else:
-			pass # не должно быть такого
-			myprint('не должно быть такого') # todo to log for user
+			# не должно быть такого
+			myprint('не должно быть такого')
 	#
 	# токены
 	result['tokens'] = tokens
@@ -147,8 +147,24 @@ def export_doc(document, myprint):
 	result['plain_text']= ' '.join( [c.text for c in chunks] )
 	myprint('plain_text  длинной=' + str(len(result['plain_text'])))
 	#
-	# Source_file # document.source_file.name
-	full_path = os.path.join(settings.MEDIA_ROOT, document.source_file.name)
+	# if this is a document, then handle source_file else handle as a discussion
+	if document.content_type in settings.DISCUSS_CONTENT_TYPES:
+		# discussion
+		result['is_discussion'] = 1
+		result['is_document'] = 0
+		myprint('  is a DISCUSSION ' + str(document.content_type))
+		html = document.converted_content
+		slug = re.search("slug=([\\w\\d_]+)[&$]", html)
+		if bool(slug):
+			slug = slug.group(1)
+			full_path = os.path.join(settings.MEDIA_ROOT, slug+'.zip')
+	else:
+		# document
+		result['is_discussion'] = 0
+		result['is_document'] = 1
+		# Source_file # document.source_file.name
+		full_path = os.path.join(settings.MEDIA_ROOT, document.source_file.name)
+	# берем fiilpath и его закатываем в base 64 чем бы он не был
 	try:
 		with open(full_path, "rb") as file_src_of_doc:
 			encoded_string = base64.b64encode(file_src_of_doc.read())
@@ -156,14 +172,14 @@ def export_doc(document, myprint):
 		myprint('+Source_file OK - is FOUND')
 	except IOError:
 		result['Source_file']=None # поле будет пустым, если файл не найден
-		myprint('+Source_file ISNOT FOUND')
+		myprint('+Source_file IS NOT FOUND')
 	#
 	# state обработан, не обработан
 	result['state'] = document.state
 	myprint('+state')
 	#
 	# title
-	result['state'] = document.title
+	result['title'] = document.title
 	#
 	# load_time
 	result['load_time'] = str(document.load_time)
