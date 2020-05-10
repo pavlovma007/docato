@@ -9,6 +9,7 @@ urlpatterns = patterns('',
     url(r'^project/(?P<proj_id>\d+)$', views.ProjectPage.as_view(), name = 'project'),
     url(r'^project/delete$', views.delete_projects, name = 'delete_projects'),
     url(r'^project/(?P<proj_id>\d+)/export', views.ProjectExportPage.as_view(), name='export_project'),
+    url(r'^media_export/(?P<path>.*)$', views.media_export_download_url, name='media_export_download_url'),
 
     url(r'^subject/(?P<subj_id>\d+)$', views.SubjectPage.as_view(), name = 'subject_page'),
     url(r'^subject/(?P<subj_id>\d+)/update$', views.update_subject, name = 'update_subject'),

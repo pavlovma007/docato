@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 from django.views.generic.edit import BaseFormView, BaseCreateView, CreateView
 from django.views.decorators.http import require_POST
+from django.views.static import serve
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse, reverse_lazy
@@ -8,7 +9,7 @@ from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 from django.utils.html import escape
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import redirect, get_object_or_404,\
     render_to_response
 from django.template.context import RequestContext
@@ -18,7 +19,6 @@ from guardian.shortcuts import get_objects_for_user, get_perms, assign_perm
 import os, json, traceback, itertools
 import tables
 import forms
-#import docato.docato.tasks
 from docato_proj.celery import app as celery_app
 from django.conf import settings
 from docato.tasks import build_export_channel_name
@@ -183,6 +183,7 @@ class ProjectExportPage(LoginRequiredMixin, TemplateView): #BaseCreateView
 		connection = pika.BlockingConnection(params)
 		channel = connection.channel()  # start a channel
 		channel.queue_declare(queue=build_export_channel_name(task_id))  # Declare a queue
+		# сообщения для отображения в лог панели
 		messages=[]
 		for method_frame, properties, body in channel.consume(build_export_channel_name(task_id), inactivity_timeout=1):
 			if method_frame==None: #print(method_frame);			print(properties);			print(body)
@@ -196,6 +197,13 @@ class ProjectExportPage(LoginRequiredMixin, TemplateView): #BaseCreateView
 		connection.close()
 		#
 		return HttpResponse('<br/>'.join(messages))
+
+# выдать из папка media архив экспорта. и больше ничего
+@login_required
+def media_export_download_url(request, path):
+	if str(path).startswith('archive_P_'):
+		return serve(request, path, document_root=settings.MEDIA_ROOT,)
+	raise Http404('No matches the given query.')
 
 
 ###############################################################################

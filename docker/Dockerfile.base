@@ -23,6 +23,8 @@ RUN pip install selenium==3.141.0
 RUN pip install docker==4.2.0
 RUN pip install django-createuser==0.1.0
 RUN pip install pika==1.1.0
+RUN pip install ujson==2.0.3
+RUN pip install cssselect==1.1.0
 
 RUN wget --no-check-certificate -O /tmp/phantomjs-2.1.1-linux-x86_64.tar.bz2 https://npm.taobao.org/mirrors/phantomjs/phantomjs-2.1.1-linux-x86_64.tar.bz2 && cd /tmp &&  \
     tar -xf phantomjs-2.1.1-linux-x86_64.tar.bz2 && cp phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/bin && rm -rf phantomjs-2.1.1-linux-x86_64*
