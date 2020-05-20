@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 from celery import task
+from django.db import transaction
 from django.utils import timezone
 from docato_proj.celery import app
 import celery
@@ -10,6 +11,20 @@ from django.conf import settings
 import ujson
 import tempfile
 import zipfile
+# for export
+from lxml.html.soupparser import fromstring
+from lxml.cssselect import CSSSelector
+from lxml.etree import tostring
+from itertools import chain
+import collections
+import re
+import base64
+try:
+	from docato.docato.models import *
+	from docato.docato_proj.settings import MEDIA_ROOT
+except ImportError:
+	from docato.models import *
+	from docato_proj.settings import MEDIA_ROOT
 
 logger = logging.getLogger('preprocessing')
 print('TASKS.py imported')
@@ -88,33 +103,24 @@ def process_discussion(doc_id, url):
 	doc = Document.objects.get(id=doc_id)
 	# в media-dir лежит zip архив, в котором все файлы дискуссии, надо  положить главный html этой дискуссии в converted_content
 	try :
-		html_text = discussion_pikabu_get_byurl(url)
+		html_text, authors = discussion_pikabu_get_byurl(url)
 	except Exception as ex:
 		logger.error('не смог обработать документ %s: %r\n%s' % (doc_id, ex, traceback.format_exc()))
-		doc.state = Document.States.ANALYZED
-		doc.converted_content = '<html><head></head>ошибка случилась  <br/>{}</html>'.format(ex.message)  # todo + стек трейс
-		doc.state = Document.States.ERROR
-		doc.save()
+		print('не смог обработать документ %s: %r\n%s' % (doc_id, ex, traceback.format_exc()))
+		#
+		with transaction.atomic():
+			doc.converted_content = '<html><head></head>ошибка случилась  <br/>{}</html>'.format(ex.message)  # todo + стек трейс
+			doc.state = Document.States.ERROR
+			doc.save()
 		return
 	doc.content_type = 'pikabu.html'# preprocessing.PDF_EXTENSION
 	doc.converted_content = html_text  #'<html><head></head>hello world</html>'
+	doc.authors = authors
 	doc.state = Document.States.ANALYZED
 	doc.preproc_state = Document.States.ANALYZED
 	doc.save()
 	return
 
-from lxml.html.soupparser import fromstring
-from lxml.cssselect import CSSSelector
-from itertools import chain
-import collections
-import re
-import base64
-try:
-	from docato.docato.models import *
-	from docato.docato_proj.settings import MEDIA_ROOT
-except ImportError:
-	from docato.models import *
-	from docato_proj.settings import MEDIA_ROOT
 
 #
 def _stringify_children(node):
@@ -123,6 +129,62 @@ def _stringify_children(node):
 			[node.tail])
 	# filter removes possible Nones in texts and tails
 	return ''.join(filter(None, parts))
+
+def get_filecontent_from_zip(pathzip, pathfile):
+	with zipfile.ZipFile(pathzip, 'r', zipfile.ZIP_DEFLATED) as archive:
+		content = archive.read(pathfile)
+		return content
+	return ''
+
+# извлечь текстовые блоки из html документа
+def get_text_blocks_of_discussion(tree, dt, slug, main_authors):
+	def get_tokens_indexes(spans):
+		max_token = -1
+		min_token  = 999999999999
+		for s in spans:
+			if 'data-token-id' not in s.attrib.keys():
+				continue
+			#
+			tid = int(s.attrib['data-token-id'])
+			if tid<min_token: min_token = tid
+			if tid>max_token: max_token = tid
+		return min_token, max_token
+
+	# main text block - post
+	text_block_0 =  dict(id=0, owner_id=-1, datetime=dt, author=main_authors, edited=False, offset_from=None, offest_to=None)
+	pathzip = os.path.join(MEDIA_ROOT, '%s.zip' % (slug))
+	# если authors не разобран, то попробовать его взять из архива
+	if not bool(main_authors):
+		authors = get_filecontent_from_zip(pathzip, 'authors.json')
+	# внимание!!!  в body тело поста долждно идти вторым div (  [1] )всегда!
+	min_token, max_token = get_tokens_indexes( tree.findall('.//body//div')[1].findall('.//span')  )
+	text_block_0 =  dict(id=0, owner_id=-1, datetime=str(dt), author=authors, edited=False, offset_from=min_token, offest_to=max_token)
+	#
+	# other blocks
+	blocks = [ text_block_0 ]
+	comments = ujson.loads( get_filecontent_from_zip(pathzip, 'comments.json') )
+	comments = comments['comments']
+	_nocommentsinpage_counter = 0 # для отладки, иногда почему то коменты отсутствуют в html и не имеют токенов разметки, файлы comments.json и анализ текста страницы делвается отдельно,
+	# поэтому возможно отсутствуют некоторые коментарии, которые добавлялись между разбором страницы и скачивании комментариев
+	for id in comments.keys():
+		comment = comments[id]
+		#
+		try:
+			all_spans = tree.xpath("//div[@id = '%s']" % id)[0].findall(".//span")
+		except IndexError as ex:
+			_nocommentsinpage_counter+=1
+			continue
+		min_token, max_token = get_tokens_indexes(all_spans)
+		#
+		block = dict(id=id, owner_id=comment['answer'], datetime=str(comment['date']),
+		             author=comment['nick'], edited=False,
+		             offset_from=min_token, offest_to=max_token)
+		#
+		blocks.append(block)
+	return blocks
+
+# экспорт докумета в json для обучения ИИ
+# и дискуссии тоже
 def export_doc(document, myprint):
 	myprint('<br/><br/>ДОКУМЕНТ №'+str(document.id)+'<br/>')
 	result = dict()
@@ -147,6 +209,7 @@ def export_doc(document, myprint):
 	result['plain_text']= ' '.join( [c.text for c in chunks] )
 	myprint('plain_text  длинной=' + str(len(result['plain_text'])))
 	#
+	text_blocks = None
 	# if this is a document, then handle source_file else handle as a discussion
 	if document.content_type in settings.DISCUSS_CONTENT_TYPES:
 		# discussion
@@ -157,13 +220,19 @@ def export_doc(document, myprint):
 		slug = re.search("slug=([\\w\\d_]+)[&$]", html)
 		if bool(slug):
 			slug = slug.group(1)
+			# нужен дальше\ниже для построения Source_file
 			full_path = os.path.join(settings.MEDIA_ROOT, slug+'.zip')
+			#
+			# + построим текстовые блоки
+			text_blocks = get_text_blocks_of_discussion(tree, document.load_time, slug, document.authors)
+
 	else:
 		# document
 		result['is_discussion'] = 0
 		result['is_document'] = 1
 		# Source_file # document.source_file.name
 		full_path = os.path.join(settings.MEDIA_ROOT, document.source_file.name)
+	#
 	# берем fiilpath и его закатываем в base 64 чем бы он не был
 	try:
 		with open(full_path, "rb") as file_src_of_doc:
@@ -220,7 +289,10 @@ def export_doc(document, myprint):
 	# put frames structure to json
 	result['frames'] = [frames[sk] for sk in frames.keys()]
 	myprint('обработано '+str(len(cues))+' фреймов/пометок в документе '+str(document.id))
-
+	# если это дискуссия, то есть текстовые блоки, надо их "присобачить"
+	if bool(text_blocks):
+		result['discussion'] = text_blocks
+		myprint('в дискуссии %s текстовых блоков'%len(text_blocks))
 	return ujson.dumps(result)
 
 def build_export_channel_name(task_id):
@@ -263,15 +335,16 @@ def project_export(proj_id):
 			documents_portion = list( s.docs.defer("converted_content").only("id","title").all() )
 
 			for d in documents_portion:
+				if d.state != Document.States.ANALYZED:
+					continue
 				d_json = export_doc(d, send_log_message)
 				# сохранить в файл
 				# упаковать документы в архив
-				archive.writestr('proj_%s_subj_%s_doc_%s.txt'%(proj_id, s.id, d.id), d_json)
-
-			project_document_count +=  1
+				archive.writestr('proj_%s_subj_%s_doc_%s.json'%(proj_id, s.id, d.id), d_json)
+				project_document_count +=  1
 		archive.close()
 		send_log_message('project export archive is ready!<br/>')
-	send_log_message('in project '+str(proj_id)+' found '+str(project_document_count)+' documents')
+	send_log_message('in project '+str(proj_id)+' found '+str(project_document_count)+' documents (or discussions)')
 	download_filename = archive.filename[len(MEDIA_ROOT):]
 	send_log_message('DOWNLOAD EXPORTED ZIP FILE : <a target="_blank" href="/media_export%s" >'%download_filename +download_filename+ '</a>')
 	return
