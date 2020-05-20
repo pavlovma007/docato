@@ -60,6 +60,8 @@ def get_post_html_uft8(url):
 	just_story = driver.execute_script('return document.getElementsByClassName("story__content-inner")[0].outerHTML')
 	just_head =  driver.execute_script('return document.getElementsByTagName("head")[0].outerHTML')
 	title_text = driver.execute_script('return document.title')
+	authors = driver.execute_script(
+		"return document.getElementsByClassName('user__nick story__user-link')[0].getAttribute('href')")
 	# перегоняем в html строку, чтобы немного подправить для быстрого отображения (no lazy)
 	doc = fromstring(just_story) #driver.page_source  # s
 	#meta = doc.xpath('//meta[@charset]')[0]
@@ -86,7 +88,7 @@ def get_post_html_uft8(url):
 	#
 	#with open('page.html', 'wb') as f:   f.write(s.encode('utf-8'))
 	#
-	return s.encode('utf-8'), height , just_head.encode('utf-8')
+	return s.encode('utf-8'), height , just_head.encode('utf-8'), authors
 
 #driver.quit()
 if __name__ == '__main__':

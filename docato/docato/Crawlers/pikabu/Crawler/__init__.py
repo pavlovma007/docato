@@ -89,7 +89,7 @@ class PikabuWithCommentsProcessor(object):
         # todo сохранить это куда то например в zip перед упаковкой
         json_s, json_obj = _make_comment_links_json(comments_xmltext)
         # делаем сам пост , чтобы отсечь все лишнее
-        post_data , post_height, just_head_data = get_post_html_uft8(self._make_post_url(post_id))
+        post_data , post_height, just_head_data, authors = get_post_html_uft8(self._make_post_url(post_id))
         #post_data_id = app.add_data(post_data)
 
         post_etree = fromstring(post_data)
@@ -138,7 +138,8 @@ class PikabuWithCommentsProcessor(object):
         # сохраним все коментарии
         with open('{0}/{1}/comments.json'.format(TMP_DIR, slug), 'w') as comment_json:
             comment_json.write(json_s)
-
+        with open('{0}/{1}/authors.json'.format(TMP_DIR, slug), 'w') as comment_json:
+            comment_json.write(authors)
         # сожмём содержимое
         #zip -rm Output folder1  folder2  file1
         command = 'zip -rm {1} ./ ; mv "{0}/{1}/{1}.zip" "{2}" ; rm -r {0}/{1}'.format(TMP_DIR, slug, MEDIA_DIR)
@@ -148,7 +149,7 @@ class PikabuWithCommentsProcessor(object):
         # удалить ресурс с серфинга
         app.remove_data(summ_post_and_comm)
         #
-        return  content2
+        return  content2, authors
 
 
     # ok
