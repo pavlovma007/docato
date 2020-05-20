@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
+import sys
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -22,6 +23,10 @@ def get_post_html_uft8(url):
 		print("Page is ready!")
 	except TimeoutException:
 		print("Loading took too much time!")
+		#
+		# raise it again
+		t, v, tb = sys.exc_info()
+		raise t, v, tb
 	driver = browser
 	driver.set_window_size(1000, 550)
 	# удаляем лишнее со страницы
@@ -90,7 +95,6 @@ def get_post_html_uft8(url):
 	#
 	return s.encode('utf-8'), height , just_head.encode('utf-8'), authors
 
-#driver.quit()
 if __name__ == '__main__':
 	s = get_post_html_uft8('https://pikabu.ru/story/_7226424')  # test
 	#print(s)

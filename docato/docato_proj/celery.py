@@ -20,11 +20,6 @@ except ImportError:
 print('app.tasks=', app.tasks)
 
 app.conf.update(
-    #CELERY_RESULT_BACKEND = 'djcelery.backends.database:DatabaseBackend', # todo почистить  раз уж ничекго не нужно ?
-    #BROKER_URL = 'amqp://guest:guest@127.0.0.1:5672/',
-    #BROKER_URL = 'redis://redis',
-    #BROKER_URL = 'redis://127.0.0.1',
-    #CELERY_RESULT_BACKEND = 'redis://localhost/0',
 	#
 	BROKER_URL='amqp://admin:mypass@rabbit:5672',
 	#BROKER_URL='amqp://admin:mypass@127.0.0.1:5673',

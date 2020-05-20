@@ -179,7 +179,10 @@ class ProjectExportPage(LoginRequiredMixin, TemplateView): #BaseCreateView
 		task_id=request.POST['task_id'] # для получения лога задачи со страницы которая получила этот id
 		#
 		url = os.environ.get('CLOUDAMQP_URL', celery_app.conf.BROKER_URL)
-		params = pika.URLParameters(url)
+		try:
+			params = pika.URLParameters(url)
+		except TypeError:
+			raise Http404('no correct AMQP params')
 		connection = pika.BlockingConnection(params)
 		channel = connection.channel()  # start a channel
 		channel.queue_declare(queue=build_export_channel_name(task_id))  # Declare a queue

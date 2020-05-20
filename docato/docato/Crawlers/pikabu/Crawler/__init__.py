@@ -86,7 +86,6 @@ class PikabuWithCommentsProcessor(object):
         # делаем html фрейм с комментариями к посту
         comment_data , comment_etree = _make_comment_html_from_xml(comments_xmltext)
         #
-        # todo сохранить это куда то например в zip перед упаковкой
         json_s, json_obj = _make_comment_links_json(comments_xmltext)
         # делаем сам пост , чтобы отсечь все лишнее
         post_data , post_height, just_head_data, authors = get_post_html_uft8(self._make_post_url(post_id))
@@ -189,20 +188,15 @@ class PikabuWithCommentsProcessor(object):
     #         os.mkdir(dir)
 
 #################################################################################################
-def process_docs(opts):
-    procs = PikabuWithCommentsProcessor(opts)
-    fetcher = FromFileFetcher(opts) # IdsGenerateFetcher(opts)
-    process_items_simulteaniously(opts, fetcher, procs)
+# def process_docs(opts):
+#     procs = PikabuWithCommentsProcessor(opts)
+#     fetcher = FromFileFetcher(opts) # IdsGenerateFetcher(opts)
+#     process_items_simulteaniously(opts, fetcher, procs)
     
 #################################################################################################
 
 #   MAIN CODE
 def discussion_pikabu_get_byurl(url):
-    pass
     proc = PikabuWithCommentsProcessor({})
     return proc.__call__(url)
 
-if __name__ == '__main__':
-    #discussion_pikabu_get_byurl('https://pikabu.ru/story/na_khalyavu_uksus_sladkiy_7226424')
-    #discussion_pikabu_get_byurl('https://pikabu.ru/story/vremya_menyaet_lyudey_7264733')
-    discussion_pikabu_get_byurl('https://pikabu.ru/story/ya_devushka_i_ya_ne_ponimayu_togo_feminizma_kotoryiy_sushchestvuet_v_realiyakh_nashego_obshchestva_6561974')
