@@ -328,7 +328,7 @@ def project_export(**kwargs): # todo rename task to export_any
 		d_json = export_doc(d, send_log_message)
 		# сохранить в файл
 		# упаковать документы в архив
-		archive.writestr('doc_%s.json' % (d.id), d_json)
+		archive.writestr('proj_%s_subj_%s_doc_%s.json' % (d.subject.project.name, d.subject.name,d.title), d_json)
 	# zip archive
 	tmparchive = os.path.join(MEDIA_ROOT, 'archive_date_%s.zip'%(timezone.now()) )
 	with zipfile.ZipFile(tmparchive, 'w', zipfile.ZIP_DEFLATED) as archive:
