@@ -35,7 +35,8 @@
 			<div class="panel-body">
 				{% render_table table %}
 				{% if 'can_add_or_remove_subjects' in project_perms %}
-				<a href="javascript:void(0)" class="ajax_link" id="delete_subjects">{% trans 'Delete the selected subjects' %}</a>
+				<a href="javascript:void(0)" class="ajax_link" id="delete_subjects">{% trans 'Delete the selected subjects' %}</a>  &nbsp;&nbsp;
+				<a href="javascript:void(0)" class="ajax_link" id="export_any">{% trans 'Export to JSON the selected subjects' %}</a>
 				{% endif %}
 			</div>
 		</div>
@@ -48,7 +49,10 @@
 				delete_url : "{% url 'delete_subjects' %}",
 				get_row_link : function () {
 					return '../subject/' + $(this).find('.select input').attr('value');
-				}
+				},
+				// export
+				export_button : '#export_any',
+				export_url : "{% url 'export_any' %}?subj_items=",
 			});
 		});
 	</script>
