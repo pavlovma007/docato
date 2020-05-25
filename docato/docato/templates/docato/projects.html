@@ -32,7 +32,8 @@
 			<div class="panel-body">
 				{% render_table table %}
 				{% if perms.med_web_helper.del_project %}
-				<a href="javascript:void(0)" class="ajax_link" id="delete_projects">{% trans 'Delete the selected projects' %}</a>
+				<a href="javascript:void(0)" class="ajax_link" id="delete_projects">{% trans 'Delete the selected projects' %}</a> &nbsp;
+				<a href="javascript:void(0)" class="ajax_link" id="export_any">{% trans 'Export to JSON the selected projects' %}</a>
 				{% endif %}
 			</div>
 		</div>
@@ -45,7 +46,10 @@
 				delete_url : "{% url 'delete_projects' %}",
 				get_row_link : function () {
 					return 'project/' + $(this).find('.select input').attr('value');
-				}
+				},
+				// export
+				export_button : '#export_any',
+				export_url : "{% url 'export_any' %}?proj_items=",
 			});
 		});
 	</script>

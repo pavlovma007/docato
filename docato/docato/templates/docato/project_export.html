@@ -12,7 +12,6 @@
 
 {% block navbar %}
 	<li><a href="{% url 'projects' %}">{% trans 'Projects' %}</a></li>
-    <li class="active"><a href="{% url 'project' project.id %}">Proj&nbsp;{{ project.name }}</a></li>
 {% endblock navbar %}
 
 {% block content %}

@@ -28,6 +28,7 @@ from feature_extraction import highlight_features, try_extract_int, try_extract_
 from docato.utils import iterate_over_slot_values, iterate_over_frametypes, \
     get_frame_color_style_for_tree, get_sval_color_style, get_sval_color_style_for_tree
 import pika
+import zipfile
 
 logger = logging.getLogger('common')
 
@@ -148,17 +149,28 @@ class ProjectExportPage(LoginRequiredMixin, TemplateView): #BaseCreateView
 	template_name = 'docato/project_export.html'
 
 	# просто посылаем задачу в работу
-	def start_export(self):
-		tid = celery_app.send_task('project-export', kwargs={'proj_id':self.project.id  })
+	def start_export(self, params):
+		tid = celery_app.send_task('project-export', kwargs=params ) # {'proj_id':self.project.id  } # TODO remove comment
 		#print(tid)
 		return tid
 
 	def get_context_data(self, **kwargs):
 		context =TemplateView.get_context_data(self,**kwargs)
-		context['project'] = Project.objects.filter(id=context['proj_id']).get()
-		#
-		self.project = context['project']
-		tid = self.start_export()
+	    #context['project'] = Project.objects.filter(id=context['proj_id']).get()
+		args = dict()
+		projects = None
+		if 'proj_items' in self.request.GET.keys():
+			projects = self.request.GET['proj_items']
+			args['projects'] = projects
+		subjects = None
+		if 'subj_items' in self.request.GET.keys():
+			subjects = self.request.GET['subj_items']
+			args['subjects'] = subjects
+		dos = None
+		if 'docs_items' in self.request.GET.keys():
+			docs = self.request.GET['docs_items']
+			args['docs'] = docs
+		tid = self.start_export(args)
 		#
 		context['task_id'] = tid
 		return context
@@ -204,7 +216,7 @@ class ProjectExportPage(LoginRequiredMixin, TemplateView): #BaseCreateView
 # выдать из папка media архив экспорта. и больше ничего
 @login_required
 def media_export_download_url(request, path):
-	if str(path).startswith('archive_P_'):
+	if str(path).startswith('archive_'):
 		return serve(request, path, document_root=settings.MEDIA_ROOT,)
 	raise Http404('No matches the given query.')
 
@@ -965,6 +977,7 @@ def delete_list_value(request, **kwargs):
     else:
         raise SuspiciousOperation()
 
+# получить от из спец архива дискусси ресурс, который внутри находится, нужно чтоб отобразить снапшот дискуссии
 @login_required
 def doc_discuss_recource(request, **kwargs):
     doc = get_doc(request, **kwargs)

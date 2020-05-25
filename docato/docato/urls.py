@@ -8,8 +8,8 @@ urlpatterns = patterns('',
     url(r'^$', views.Projects.as_view(), name = 'projects'),
     url(r'^project/(?P<proj_id>\d+)$', views.ProjectPage.as_view(), name = 'project'),
     url(r'^project/delete$', views.delete_projects, name = 'delete_projects'),
-    url(r'^project/(?P<proj_id>\d+)/export', views.ProjectExportPage.as_view(), name='export_project'),
-    url(r'^media_export/(?P<path>.*)$', views.media_export_download_url, name='media_export_download_url'),
+    url(r'^media_export/(?P<path>.+)$', views.media_export_download_url, name='media_export_download_url'),
+    url(r'^export\?proj_items=(?P<proj_id>\d+)$', views.ProjectExportPage.as_view(), name='export_project'),
 
     url(r'^subject/(?P<subj_id>\d+)$', views.SubjectPage.as_view(), name = 'subject_page'),
     url(r'^subject/(?P<subj_id>\d+)/update$', views.update_subject, name = 'update_subject'),
@@ -48,4 +48,5 @@ urlpatterns = patterns('',
     
     url(r'^search_empty$', views.SearchEmpty.as_view(), name = 'search_empty'),
     url(r'^search/(?P<eng_id>\d+)/(?P<query>.*)$', views.do_search, name = 'do_search'),
+    url(r'^export', views.ProjectExportPage.as_view(), name='export_any'),
 )

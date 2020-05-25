@@ -109,7 +109,7 @@ def process_discussion(doc_id, url):
 		print('не смог обработать документ %s: %r\n%s' % (doc_id, ex, traceback.format_exc()))
 		#
 		with transaction.atomic():
-			doc.converted_content = '<html><head></head>ошибка случилась  <br/>{}</html>'.format(ex.message)  # todo + стек трейс
+			doc.converted_content = '<html><head></head>ошибка случилась  <br/>{}</html>'.format(ex.message)
 			doc.state = Document.States.ERROR
 			doc.save()
 		return
@@ -295,58 +295,73 @@ def export_doc(document, myprint):
 		myprint('в дискуссии %s текстовых блоков'%len(text_blocks))
 	return ujson.dumps(result)
 
+
+
 def build_export_channel_name(task_id):
 	return 'project-export-tid-%s'%task_id
 @app.task(name='project-export')
-def project_export(proj_id):
+def project_export(**kwargs): # todo rename task to export_any
 	from models import Project
-	# try:
-	# 	from docato.docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
-	# except ImportError:
-	# 	from docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
-
+	from models import Subject
+	from models import Document
 	#
-	logger.info('Got proj_id %s to process for EXPORT ', proj_id)
-	project = Project.objects.get(id=proj_id)
 	task_id = celery.current_task.request.id
 	#   send
 	def send_log_message(msg):
 		import pika
-		url = os.environ.get('CLOUDAMQP_URL',  app.conf.BROKER_URL )
+		url = os.environ.get('CLOUDAMQP_URL', app.conf.BROKER_URL)
 		params = pika.URLParameters(url)
 		params.socket_timeout = 5
 		#
 		connection = pika.BlockingConnection(params)  # Connect to CloudAMQP
 		channel = connection.channel()  # start a channel
-		qname=build_export_channel_name(task_id)
-		channel.queue_declare(queue=qname )  # Declare a queue
+		qname = build_export_channel_name(task_id)
+		channel.queue_declare(queue=qname)  # Declare a queue
 		# send a message
-		channel.basic_publish(exchange='', routing_key='project-export-tid-%s'%task_id, body=msg)
-		#print ("[x] Message sent to consumer")
+		channel.basic_publish(exchange='', routing_key='project-export-tid-%s' % task_id, body=msg)
+		# print ("[x] Message sent to consumer")
 		connection.close()
 	#
-	subjects = Project.objects.filter(id=proj_id).get().subjects.all()
-	project_document_count = 0
-	#
-	tmparchive = os.path.join(MEDIA_ROOT, 'archive_P_%s_date_%s.zip'%(proj_id, timezone.now()) )
+	def export_doc_to_archive(d, archive):
+		if d.state != Document.States.ANALYZED:
+			return
+		d_json = export_doc(d, send_log_message)
+		# сохранить в файл
+		# упаковать документы в архив
+		archive.writestr('doc_%s.json' % (d.id), d_json)
+	# zip archive
+	tmparchive = os.path.join(MEDIA_ROOT, 'archive_date_%s.zip'%(timezone.now()) )
 	with zipfile.ZipFile(tmparchive, 'w', zipfile.ZIP_DEFLATED) as archive:
-
-		for s in subjects:
-			documents_portion = list( s.docs.defer("converted_content").only("id","title").all() )
-
-			for d in documents_portion:
-				if d.state != Document.States.ANALYZED:
-					continue
-				d_json = export_doc(d, send_log_message)
-				# сохранить в файл
-				# упаковать документы в архив
-				archive.writestr('proj_%s_subj_%s_doc_%s.json'%(proj_id, s.id, d.id), d_json)
-				project_document_count +=  1
+		# получим типа список документов, ид + заголовок
+		documents_list = []
+		if 'projects' in kwargs.keys():
+			for proj_id in [int(p) for p in kwargs['projects'].split(',')]:
+				logger.info('Got proj_id %s to process for EXPORT ', proj_id)
+				# project = Project.objects.get(id=proj_id)
+				subjects = Project.objects.filter(id=proj_id).get().subjects.all()
+				for s in subjects:
+					documents_portion = list( s.docs.defer("converted_content").only("id","title").all() )
+					for d in documents_portion:
+						# documents_list.append(d)
+						export_doc_to_archive(d,archive)
+		if 'subjects' in kwargs.keys():
+			for subj_id in [int(p) for p in kwargs['subjects'].split(',')]:
+				documents_portion = list(Document.objects.filter(subject=subj_id).defer("converted_content").only("id", "title").all())
+				for d in documents_portion:
+					# documents_list.append(d)
+					export_doc_to_archive(d, archive)
+		if 'docs' in kwargs.keys():
+			for doc_id in [int(p) for p in kwargs['docs'].split(',')]:
+				documents_portion = Document.objects.filter(id=doc_id).defer("converted_content").only("id", "title").all()
+				for d in documents_portion:
+					# documents_list.append(d)
+					export_doc_to_archive(d, archive)
+		#
 		archive.close()
-		send_log_message('project export archive is ready!<br/>')
-	send_log_message('in project '+str(proj_id)+' found '+str(project_document_count)+' documents (or discussions)')
+	send_log_message('project export archive is ready!<br/>')
+	send_log_message('in export task '+' found '+str(len(documents_list))+' documents (or discussions)')
 	download_filename = archive.filename[len(MEDIA_ROOT):]
-	send_log_message('DOWNLOAD EXPORTED ZIP FILE : <a target="_blank" href="/media_export%s" >'%download_filename +download_filename+ '</a>')
+	send_log_message('DOWNLOAD EXPORTED ZIP FILE : <b><a target="_blank" href="/media_export%s" >'%download_filename +download_filename+ '</a></b>')
 	send_log_message('SUCCESS')
 	return
 

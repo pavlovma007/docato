@@ -12,6 +12,7 @@ TableEvents = function(opts) {
 			
 			delete_button : 'thead .select input[type="checkbox"]',
 			delete_confirm_message : gettext('Are you sure to delete the selected records?'),
+			export_confirm_message : gettext('Are you sure to EXPORT the selected records to json?'),
 			delete_url : 'delete',
 			after_delete : function () { location.reload(); },
 	
@@ -31,6 +32,7 @@ TableEvents = function(opts) {
 	var delete_button = $(opts.delete_button);
 	var select_all_cb = table.find(opts.select_all_cb);
 	var select_checkboxes = table.find(opts.select_cb);
+	var export_button = $(opts.export_button);
 
 	var disable_select_all = false;
 	
@@ -66,6 +68,24 @@ TableEvents = function(opts) {
 					data : req_data,
 					success : opts.after_delete
 				});
+			}
+		});
+		// export button click
+        export_button.click(function() {
+			var selected_ids = select_checkboxes.filter(':checked').map(function () { return this.value; } ).get()
+			if (selected_ids.length > 0 && confirm(opts.export_confirm_message)) {
+//				var req_data = {
+//					ids : selected_ids
+//				};
+//				req_data[csrf_token.attr('name')] = csrf_token.attr('value')
+                var url =  opts.export_url + selected_ids.toString(); // припишем туда ids, будет типа: proj_items=23,45
+                window.open(url); // , '_blank'
+//				$.ajax({
+//					url  : opts.export_url,
+//					type : 'post',
+//					data : req_data,
+//					success : opts.after_export
+//				});
 			}
 		});
 	}
