@@ -177,8 +177,8 @@ def get_text_blocks_of_discussion(tree, dt, slug, main_authors):
 		min_token, max_token = get_tokens_indexes(all_spans)
 		#
 		block = dict(id=id, owner_id=comment['answer'], datetime=str(comment['date']),
-		             author=comment['nick'], edited=False,
-		             offset_from=min_token, offest_to=max_token)
+					 author=comment['nick'], edited=False,
+					 offset_from=min_token, offest_to=max_token)
 		#
 		blocks.append(block)
 	return blocks
