@@ -28,7 +28,7 @@
             <td>
                 <div id="log" style="text-align:left;">
                 </div>
-                <img src="https://bureau.ru/bb/soviet/20120626/krutilka_12frames.gif"> <!-- TODO -->
+                <img id="exportstatucimg" src="/static/docato/img/krutilka_12frames.gif" style='width: 32px;'>
             </td>
         </tr>
 	</tbody>
@@ -44,6 +44,10 @@ jQuery(document).ready(function ($) {
           data: { csrfmiddlewaretoken: "{{ csrf_token }}", page:123, task_id:'{{task_id}}' },
           success: function(data){
             $("#log").append(data);
+            if(data.endsWith('SUCCESS')){
+            	// покажем успех и прекратим крутить крутилку.
+				$('#exportstatucimg').attr('src','/static/docato/img/success.png');
+            }
           },
           dataType: 'html'
         });

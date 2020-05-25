@@ -347,6 +347,7 @@ def project_export(proj_id):
 	send_log_message('in project '+str(proj_id)+' found '+str(project_document_count)+' documents (or discussions)')
 	download_filename = archive.filename[len(MEDIA_ROOT):]
 	send_log_message('DOWNLOAD EXPORTED ZIP FILE : <a target="_blank" href="/media_export%s" >'%download_filename +download_filename+ '</a>')
+	send_log_message('SUCCESS')
 	return
 
 
