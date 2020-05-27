@@ -132,8 +132,11 @@ def _stringify_children(node):
 
 def get_filecontent_from_zip(pathzip, pathfile):
 	with zipfile.ZipFile(pathzip, 'r', zipfile.ZIP_DEFLATED) as archive:
-		content = archive.read(pathfile)
-		return content
+		try:
+			content = archive.read(pathfile)
+			return content
+		except KeyError:
+			pass
 	return ''
 
 # извлечь текстовые блоки из html документа
