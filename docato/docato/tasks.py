@@ -159,6 +159,8 @@ def get_text_blocks_of_discussion(tree, dt, slug, main_authors):
 	# если authors не разобран, то попробовать его взять из архива
 	if not bool(main_authors):
 		authors = get_filecontent_from_zip(pathzip, 'authors.json')
+	else:
+		authors = main_authors
 	# внимание!!!  в body тело поста долждно идти вторым div (  [1] )всегда!
 	min_token, max_token = get_tokens_indexes( tree.findall('.//body//div')[1].findall('.//span')  )
 	text_block_0 =  dict(id=0, owner_id=-1, datetime=str(dt), author=authors, edited=False, offset_from=min_token, offest_to=max_token)
