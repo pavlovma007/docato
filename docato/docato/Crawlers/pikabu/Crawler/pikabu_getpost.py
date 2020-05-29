@@ -74,6 +74,9 @@ def get_post_html_uft8(url):
 	#
 	for div in doc.xpath("//div[contains(@class, 'image-lazy')]"):
 		fig = div.getparent()
+		svg = fig.findall('svg')
+		if bool(svg):
+			svg[0].set('style', 'height:0px;') # поставим svg 0-евую высоту, чтобы не смещалась картинка
 		rect = fig.findall('svg/rect')
 		h = '';
 		if rect:
