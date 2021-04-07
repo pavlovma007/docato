@@ -59,7 +59,7 @@ USE_TZ = True
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/docato_data/media' #'/home/mp/SATEK/docato/media/'
-DISCUSS_URLS_MAIN_PART = ['pikabu.ru']
+DISCUSS_URLS_MAIN_PART = ['pikabu.ru', 'facebook.com']
 DISCUSS_CONTENT_TYPES = ['pikabu.html']
 WGET_PORT = 8090
 TMP_DIR = '/tmp'

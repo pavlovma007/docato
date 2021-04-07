@@ -95,15 +95,31 @@ def process_discussion(doc_id, url):
 	from models import Document
 	try:
 		from docato.docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
+		from docato.docato.Crawlers.Facebook.Crawler import discussion_FB_get_byurl
 	except ImportError:
 		from docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
+		from docato.Crawlers.Facebook.Crawler import discussion_FB_get_byurl
 
 	#
 	logger.info('Got doc %s to process', doc_id)
 	doc = Document.objects.get(id=doc_id)
 	# в media-dir лежит zip архив, в котором все файлы дискуссии, надо  положить главный html этой дискуссии в converted_content
 	try :
-		html_text, authors = discussion_pikabu_get_byurl(url)
+		if 'pikabu.ru' in url:
+			html_text, authors = discussion_pikabu_get_byurl(url)
+			doc.content_type = 'facebook.html'  # preprocessing.PDF_EXTENSION
+			doc.authors = authors
+			doc.converted_content = html_text
+			doc.state = Document.States.ANALYZED
+			doc.preproc_state = Document.States.ANALYZED
+		if 'facebook.com' in url:
+			html_text = discussion_FB_get_byurl(url)
+			doc.content_type = 'pikabu.html'  # preprocessing.PDF_EXTENSION
+			doc.authors = ''
+			doc.converted_content = html_text
+			doc.state = Document.States.ANALYZED
+			doc.preproc_state = Document.States.ANALYZED
+
 	except Exception as ex:
 		logger.error('не смог обработать документ %s: %r\n%s' % (doc_id, ex, traceback.format_exc()))
 		print('не смог обработать документ %s: %r\n%s' % (doc_id, ex, traceback.format_exc()))
@@ -113,11 +129,6 @@ def process_discussion(doc_id, url):
 			doc.state = Document.States.ERROR
 			doc.save()
 		return
-	doc.content_type = 'pikabu.html'# preprocessing.PDF_EXTENSION
-	doc.converted_content = html_text  #'<html><head></head>hello world</html>'
-	doc.authors = authors
-	doc.state = Document.States.ANALYZED
-	doc.preproc_state = Document.States.ANALYZED
 	doc.save()
 	return
 
