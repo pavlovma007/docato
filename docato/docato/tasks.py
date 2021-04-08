@@ -96,9 +96,11 @@ def process_discussion(doc_id, url):
 	try:
 		from docato.docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
 		from docato.docato.Crawlers.Facebook.Crawler import discussion_FB_get_byurl
+		from docato.docato.Crawlers.LJ.Crawler import discussion_LJ_get_byurl
 	except ImportError:
 		from docato.Crawlers.pikabu.Crawler import discussion_pikabu_get_byurl
 		from docato.Crawlers.Facebook.Crawler import discussion_FB_get_byurl
+		from docato.Crawlers.LJ.Crawler import discussion_LJ_get_byurl
 
 	#
 	logger.info('Got doc %s to process', doc_id)
@@ -107,18 +109,26 @@ def process_discussion(doc_id, url):
 	try :
 		if 'pikabu.ru' in url:
 			html_text, authors = discussion_pikabu_get_byurl(url)
-			doc.content_type = 'facebook.html'  # preprocessing.PDF_EXTENSION
+			doc.content_type = 'pikabu.html'  # preprocessing.PDF_EXTENSION
 			doc.authors = authors
 			doc.converted_content = html_text
 			doc.state = Document.States.ANALYZED
 			doc.preproc_state = Document.States.ANALYZED
 		if 'facebook.com' in url:
+			doc.content_type = 'facebook.html'
 			html_text = discussion_FB_get_byurl(url)
-			doc.content_type = 'pikabu.html'  # preprocessing.PDF_EXTENSION
 			doc.authors = ''
 			doc.converted_content = html_text
 			doc.state = Document.States.ANALYZED
 			doc.preproc_state = Document.States.ANALYZED
+		if 'livejournal.com' in url:
+			doc.content_type = 'livejournal.html'
+			html_text = discussion_LJ_get_byurl(url)
+			doc.authors = ''
+			doc.converted_content = html_text
+			doc.state = Document.States.ANALYZED
+			doc.preproc_state = Document.States.ANALYZED
+
 
 	except Exception as ex:
 		logger.error('не смог обработать документ %s: %r\n%s' % (doc_id, ex, traceback.format_exc()))
