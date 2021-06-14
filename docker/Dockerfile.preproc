@@ -19,7 +19,7 @@ RUN apt-get update && \
 		pkg-config libspiro-dev libpng-dev libjpeg-dev \
         git wget libopenjp2-7-dev libfontconfig1-dev \
 		libtool autoconf python python-dev libglib2.0-dev libxml2-dev \
-		gettext libcairo2-dev libpango1.0-dev supervisor xvfb && \
+		gettext libcairo2-dev libpango1.0-dev supervisor xvfb unoconv && \
 	apt-get clean
 
 RUN ldconfig

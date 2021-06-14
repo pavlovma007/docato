@@ -46,14 +46,17 @@ def get_post_page(post_page_url):
 		jQuery('input.b-leaf-actions-checkbox[type="checkbox"]').prop('checked', 1);
 		// кликнуть кнопку развернуть
 		jQuery('button[value="expand"]').click();
-		jQuery('li.b-leaf-actions-expand a').click(); // для другого способа верстки
+		jQuery('li.b-leaf-actions-expand a').click(); 	// для другого способа верстки
+		jQuery('a:contains("Развернуть")').click(); 	// еще один способ
+		jQuery('a:contains("Expand")').click();
+		jQuery('a.b-pseudo[rel="nofollow"][target="_self"]').click(); // для phanthomjs
 		
 		// сам пост развернуть 
 		post_elem = document.querySelector('article.entry-content');
 		// если там есть сылка для распахнуть, то нажать ее 
 		post_expand = post_elem.querySelector('.ljcut-link-expand');
 		if(!!post_expand){
-			post_expand.click()
+			post_expand.click();
 		}
     });
 	</script>
@@ -73,14 +76,14 @@ def get_post_page(post_page_url):
 			comment_json = comment_json[:-2]
 			comment_json_o = json.loads(comment_json)
 			try:
+				# тут есть и сами коменты и структура их
 				comment_json_o = comment_json_o['comments']
 			except KeyError:
-				pass
-			#
-			try:
-				comment_json_o = comment_json_o['LJ_cmtinfo']
-			except KeyError:
-				pass
+				try:
+					# тут только структура коментов без самих коментов
+					comment_json_o = comment_json_o['LJ_cmtinfo']
+				except KeyError:
+					pass
 			break
 
 

@@ -102,7 +102,8 @@ class LJWithCommentsProcessor(object):
         base_url = post_url.split('livejournal.com')[0]+'livejournal.com';
         # получили 1) сама страница с постом 2)  url для следующих страниц, 3) comment_json этой страницы 4) comment element container
         # запросить другие страницы , при этом добавить коментарии в базовую страницу, дополнить список comment_json
-        visited = set(post_url)
+        visited = set()
+        visited.add(post_url)
         for link in pages_urls[1:]:
             new_url=base_url+link;
             if new_url not in visited:
@@ -196,7 +197,7 @@ def discussion_LJ_get_byurl(url):
     return proc.__call__(url)
 
 if __name__ == '__main__':
-    #text = discussion_LJ_get_byurl('https://historical-fact.livejournal.com/12651.html?page=2')
+    text = discussion_LJ_get_byurl('https://historical-fact.livejournal.com/12651.html?page=2')
     #text = discussion_LJ_get_byurl('https://haspar-arnery.livejournal.com/565738.html?media&utm_source=recommended&utm_content=main_block')
-    text = discussion_LJ_get_byurl('https://tapkin.livejournal.com/3054738.html')
+    #text = discussion_LJ_get_byurl('https://tapkin.livejournal.com/3054738.html')
     pass
