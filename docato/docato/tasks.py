@@ -387,7 +387,9 @@ def project_export(**kwargs): # todo rename task to export_any
 	send_log_message('project export archive is ready!<br/>')
 	send_log_message('in export task '+' found '+str(len(documents_list))+' documents (or discussions)')
 	download_filename = archive.filename[len(MEDIA_ROOT):]
-	send_log_message('DOWNLOAD EXPORTED ZIP FILE : <b><a target="_blank" href="/media_export%s" >'%download_filename +download_filename+ '</a></b>')
+	send_log_message('DOWNLOAD EXPORTED ZIP FILE : <b><a target="_blank" href="/media_export%s" >'%download_filename +download_filename+
+					 '<button type = "button" class ="btn btn-success" style="margin: auto;display: block;"> Скачать </button>' + '</a></b>'
+					)
 	send_log_message('SUCCESS')
 	return
 
